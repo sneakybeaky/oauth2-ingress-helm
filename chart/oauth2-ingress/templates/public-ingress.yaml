@@ -1,0 +1,36 @@
+# This ingress exposes the protected resource, and uses the proxy ingress to control access.
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: external-auth-{{ include "oauth2-ingress.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "oauth2-ingress.name" . }}
+    helm.sh/chart: {{ include "oauth2-ingress.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User, X-Auth-Request-Email
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    {{- with .Values.ingress.annotations }}
+        {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+      - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+   {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+      {{- with .Values.ingress.paths }}
+        paths:
+          {{- toYaml . | nindent 10 }}
+      {{- end }}
+

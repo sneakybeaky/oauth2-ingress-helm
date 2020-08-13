@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Deploys an oauth2 proxy and 2 ingress to provide access control
+name: oauth2-ingress
+version: 0.0.1
