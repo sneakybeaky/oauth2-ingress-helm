@@ -19,7 +19,7 @@ inputs:
   - name: source
 
 caches:
-  - path: /tmp/build
+  - path: gopath/
 
 run:
   path: /bin/sh
@@ -32,6 +32,8 @@ run:
       echo "Linting chart.."
       helm lint chart/*
 
+      export GOPATH=$PWD/gopath
+      export PATH=$PWD/gopath/bin:$PATH
       echo
       echo "Running chart tests.."
       cd source/test
