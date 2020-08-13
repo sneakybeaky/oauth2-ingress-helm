@@ -1,0 +1,126 @@
+groups:
+  - name: dev
+    jobs: [assemble, ship]
+
+  - name: semver
+    jobs: [major, minor, patch]
+
+
+resources:
+  - name: helm-charts
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/sneakybeaky/oauth2-ingress-helm.git
+      branch: main
+      ignore_paths:
+        - ci/
+
+  - name: ci
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/sneakybeaky/oauth2-ingress-helm.git
+      branch: main
+      paths:
+        - ci/
+
+  - name: version
+    type: semver
+    icon: tag
+    source:
+      region_name: eu-west-2
+      bucket: 566231541642-build-artifacts
+      access_key_id: ((build_artifacts_bucket.access_key_id))
+      secret_access_key: ((build_artifacts_bucket.secret_access_key))
+      initial_version: 0.1.0
+      key: helm-charts/oauth2-ingress/current-version
+  
+  - name: release
+    type: s3
+    icon: package-variant-closed
+    source:
+      region_name: eu-west-2
+      bucket: 566231541642-build-artifacts
+      access_key_id: ((build_artifacts_bucket.access_key_id))
+      secret_access_key: ((build_artifacts_bucket.secret_access_key))
+      regexp: helm-charts/oauth2-ingress/releases/oauth2-ingress-(.*).tgz
+
+
+jobs:
+  - name: assemble
+    serial_groups: [version]
+    plan:
+      - in_parallel:
+        - get: helm-charts
+          trigger: true
+        - get: ci
+        - get: version
+          params: {bump: minor}
+
+      - task: "create helm chart"
+        file: ci/ci/tasks/create-helm-chart.yaml
+
+        input_mapping:
+          source: helm-charts
+          version: version
+          pipeline-source: ci
+
+        output_mapping:
+          chart: chart
+
+      - task: "fast tests"
+        file: ci/ci/tasks/fast-tests.yaml
+
+        input_mapping:
+          chart_archive: chart
+          source: helm-charts
+
+        params:
+          TESTS_PATH: source/test
+
+      - put: release
+        params:
+          file: chart/oauth2-ingress-*.tgz
+
+      - put: version
+        params: {file: version/version}
+
+  - name: ship
+    plan:
+      - in_parallel:
+        - get: release
+          trigger: true
+          passed: [assemble]
+        - get: ci
+          passed: [assemble]
+
+      - task: publish to repo
+        file: ci/ci/tasks/publish-to-repo.yaml
+
+        input_mapping:
+          build: release
+
+        params:
+          S3_PATH: s3://309251581412-helm-charts/stable
+
+  - name: major
+    serial_groups: [version]
+    plan:
+      - put: version
+
+  - name: minor
+    serial_groups: [version]
+    plan:
+      - put: version
+        params: {bump: minor, pre: rc}
+
+  - name: patch
+    serial_groups: [version]
+    plan:
+      - get: version
+        passed: [assemble]
+        params: {bump: patch, pre: rc}
+        trigger: true
+      - put: version
+        params: {file: version/version}
