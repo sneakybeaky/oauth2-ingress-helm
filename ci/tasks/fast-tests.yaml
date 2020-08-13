@@ -1,0 +1,39 @@
+# This task runs fast tests for the chart. These are typically tests that don't need access
+# to a k8s instance and can be run in under a few seconds
+
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: ninedemons/go_helm
+    tag: v3.3.0_1.14
+
+params:
+  GOCACHE: /tmp/build/cache # Used for go build caching
+
+
+inputs:
+  - name: chart_archive
+  - name: source
+
+caches:
+  - path: /tmp/build
+
+run:
+  path: /bin/sh
+  args:
+    - -exec
+    - |
+      mkdir chart
+      tar xzvf chart_archive/*.tgz -C chart
+
+      echo "Linting chart.."
+      helm lint chart/*
+
+      echo
+      echo "Running chart tests.."
+      cd source/test
+      go test -v  ./...
+

@@ -26,5 +26,3 @@ For this you will need go version 11 or later and helm installed
     $ go test -count=1 -v  ./...
     
 
-While adding tests be aware we use go modules with vendoring to make our builds faster and reliable in concourse. If you do add new dependencies please make sure to follow the appropriate [workflow](https://github.com/golang/go/wiki/Modules#daily-workflow)
-

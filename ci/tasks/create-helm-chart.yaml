@@ -1,0 +1,24 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: alpine/helm
+    tag: 3.3.0
+
+params:
+  VERSION_FILE: version/version
+
+inputs:
+  - name: source
+  - name: pipeline-source
+  - name: version
+
+outputs:
+  - name: chart
+
+run:
+  path: pipeline-source/ci/tasks/scripts/create-helm-chart.sh
+  args:
+    - source/chart/oauth2-ingress
+    - chart
