@@ -1,0 +1,24 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: alpine/helm
+    tag: 3.3.0
+
+inputs:
+  - name: build
+
+run:
+  path: /bin/sh
+  args:
+    - -exec
+    - |
+
+      for chart in build/*.tgz; do
+        echo "Publishing chart ${chart}..."
+        helm show chart ${chart}
+      done
+
+
