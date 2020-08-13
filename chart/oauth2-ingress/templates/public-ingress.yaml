@@ -1,5 +1,5 @@
 # This ingress exposes the protected resource, and uses the proxy ingress to control access.
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: external-auth-{{ include "oauth2-ingress.fullname" . }}

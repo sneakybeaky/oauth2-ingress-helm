@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	"path/filepath"
 	"strings"
 	"testing"

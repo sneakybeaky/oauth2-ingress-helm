@@ -1,5 +1,5 @@
 # This ingress sits in front of the oauth2 service for the handshake with github
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: oauth2-proxy-{{ include "oauth2-ingress.fullname" . }}
