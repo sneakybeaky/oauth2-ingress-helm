@@ -1,6 +1,6 @@
 groups:
   - name: dev
-    jobs: [assemble, fast tests, ship]
+    jobs: [assemble, fast tests, slow tests, ship]
 
   - name: semver
     jobs: [major, minor, patch]
@@ -95,6 +95,28 @@ jobs:
           chart_archive: chart
           source: source
 
+  - name: slow tests
+    serial_groups: [version]
+    plan:
+
+      - in_parallel:
+          - get: chart
+            trigger: true
+            passed: [fast tests]
+          - get: source
+            passed: [fast tests]
+          - get: ci
+            passed: [fast tests]
+          - get: version
+            passed: [fast tests]
+
+      - task: "slow tests"
+        file: ci/ci/tasks/slow-tests.yaml
+
+        input_mapping:
+          chart_archive: chart
+          source: source
+
       - put: version
         params: {file: version/version}
 
@@ -103,9 +125,9 @@ jobs:
       - in_parallel:
         - get: chart
           trigger: true
-          passed: [fast tests]
+          passed: [slow tests]
         - get: ci
-          passed: [fast tests]
+          passed: [slow tests]
 
       - task: publish to repo
         file: ci/ci/tasks/publish-to-repo.yaml
